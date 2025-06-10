@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6.0.6/schema.json",
+  "workspaces": {
+    "src": {
+      "entry": ["src/index.ts"],
+      "ignore": []
+    }
+  }
+}
