@@ -117,11 +117,7 @@ describe("Prompt.render — runtime behavior", () => {
   });
 
   it("coerces numbers and booleans to string", () => {
-    const p = prompt(
-      "coerce",
-      { en: "Count: {{count}}, Active: {{active}}" } as const,
-      { en: "none" } as const,
-    );
+    const p = prompt("coerce", { en: "Count: {{count}}, Active: {{active}}" } as const, { en: "none" } as const);
 
     const result = p.render("en", {
       systemOptions: { count: 42, active: true },
@@ -315,11 +311,7 @@ describe("replacePlaceholders — falsy values must be replaced", () => {
   });
 
   it("handles falsy values in both system and user templates", () => {
-    const p = prompt(
-      "falsy-both",
-      "Retries: {{retries}}" as const,
-      "Debug: {{debug}}" as const,
-    );
+    const p = prompt("falsy-both", "Retries: {{retries}}" as const, "Debug: {{debug}}" as const);
 
     const result = p.render({
       systemOptions: { retries: 0 },
@@ -521,5 +513,32 @@ describe("Prompt — string mode (no lang)", () => {
     });
 
     expect(result.systemPrompt).toBe("Max 1000 tokens. Strict: true");
+  });
+});
+
+// ============================================================
+// 9. Language key matching — system and user must share keys
+// ============================================================
+
+describe("prompt() — language key matching", () => {
+  it("errors when user template is missing a language from system", () => {
+    prompt(
+      "mismatch",
+      { en: "Hello", pt: "Olá" } as const,
+      // @ts-expect-error — user template missing "pt" key
+      { en: "Hi" } as const,
+    );
+  });
+
+  it("accepts matching language keys", () => {
+    const p = prompt("match", { en: "Hello {{name}}", pt: "Olá {{nome}}" } as const, { en: "Hi", pt: "Oi" } as const);
+
+    expect(p.render("en", { systemOptions: { name: "Alice" } }).systemPrompt).toBe("Hello Alice");
+    expect(p.render("pt", { systemOptions: { nome: "Bob" } }).systemPrompt).toBe("Olá Bob");
+  });
+
+  it("does not affect string mode (both strings)", () => {
+    const p = prompt("str", "System" as const, "User" as const);
+    expect(p.render().systemPrompt).toBe("System");
   });
 });

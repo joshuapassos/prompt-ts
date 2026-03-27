@@ -54,6 +54,8 @@ type EvalArgs<STemplate extends string, UTemplate extends string> =
 
 export type PromptTemplate = string | Record<string, string>;
 
+type MatchLanguages<S extends PromptTemplate> = S extends string ? PromptTemplate : Record<keyof S & string, string>;
+
 type NormalizeTemplate<T extends PromptTemplate> = T extends string ? { default: T } : T;
 
 type GetTemplate<T extends PromptTemplate, K extends string> = T extends string ? T : K extends keyof T ? T[K] : never;
@@ -105,7 +107,7 @@ export function promptSection<T extends string>(template: T) {
  * // => { systemPrompt: "Hello Alice", userPrompt: "Hi!" }
  * ```
  */
-export function prompt<S extends PromptTemplate, U extends PromptTemplate, T = unknown>(
+export function prompt<S extends PromptTemplate, U extends MatchLanguages<S>, T = unknown>(
   promptName: string,
   systemPrompt: S,
   userPrompt: U,
@@ -144,10 +146,7 @@ export function prompt<S extends PromptTemplate, U extends PromptTemplate, T = u
       const systemOptions = evalOptions.systemOptions as Record<string, unknown> | undefined;
       const userOptions = evalOptions.userOptions as Record<string, unknown> | undefined;
 
-      const sys = replacePlaceholders(
-        (normalizedSystem as Record<string, string>)[lang] as string,
-        systemOptions,
-      );
+      const sys = replacePlaceholders((normalizedSystem as Record<string, string>)[lang] as string, systemOptions);
 
       const usr = replacePlaceholders((normalizedUser as Record<string, string>)[lang] as string, userOptions);
 
