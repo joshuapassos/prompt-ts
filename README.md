@@ -1,11 +1,11 @@
-# prompt-ts
+# @joshuapassos/prompt-ts
 
 Type-safe prompt templating engine for TypeScript. Build structured LLM prompts with compile-time placeholder validation, multi-language support, and optional Zod schema integration.
 
 ## Install
 
 ```bash
-pnpm add prompt-ts
+pnpm add @joshuapassos/prompt-ts
 ```
 
 ## Features
@@ -22,7 +22,7 @@ pnpm add prompt-ts
 ### Basic (string mode)
 
 ```ts
-import { prompt } from "prompt-ts";
+import { prompt } from "@joshuapassos/prompt-ts";
 
 const p = prompt(
   "greet",
@@ -66,7 +66,7 @@ p.render("pt", {
 ### Composable sections
 
 ```ts
-import { promptSection } from "prompt-ts";
+import { promptSection } from "@joshuapassos/prompt-ts";
 
 const persona = promptSection("You are a {{role}}." as const);
 const tone = promptSection("Be professional and concise." as const);

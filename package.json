@@ -1,5 +1,5 @@
 {
-  "name": "prompt-ts",
+  "name": "@joshuapassos/prompt-ts",
   "version": "1.0.0",
   "description": "Type-safe prompt templating engine with Zod schema support",
   "main": "./src/index.ts",
