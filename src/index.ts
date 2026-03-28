@@ -98,12 +98,29 @@ export function promptSection<const T extends string>(template: T) {
  * // => { systemPrompt: "Hello Alice", userPrompt: "Hi!" }
  * ```
  */
+export interface PromptInstance<
+  S extends PromptTemplate = PromptTemplate,
+  U extends PromptTemplate = PromptTemplate,
+  T = unknown,
+> {
+  promptName: string;
+  zodSchema?: z.ZodType<T>;
+  render<
+    TLang extends keyof NormalizeTemplate<S> & keyof NormalizeTemplate<U> = keyof NormalizeTemplate<S> &
+      keyof NormalizeTemplate<U>,
+  >(
+    ...args: [S, U] extends [string, string]
+      ? EvalArgs<S extends string ? S : never, U extends string ? U : never>
+      : [lang: TLang, ...EvalArgs<StringTemplate<S, TLang & string>, StringTemplate<U, TLang & string>>]
+  ): { systemPrompt: string; userPrompt: string };
+}
+
 export function prompt<const S extends PromptTemplate, const U extends MatchLanguages<S>, T = unknown>(
   promptName: string,
   systemPrompt: S,
   userPrompt: U,
   zodSchema?: z.ZodType<T>,
-) {
+): PromptInstance<S, U, T> {
   const normalizedSystem = (
     typeof systemPrompt === "string" ? { default: systemPrompt } : systemPrompt
   ) as NormalizeTemplate<S>;

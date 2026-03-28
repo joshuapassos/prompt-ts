@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type KeysToObject, prompt, promptSection } from "./index.js";
+import { type KeysToObject, type PromptInstance, prompt, promptSection } from "./index.js";
+import { z } from "zod";
 
 // ============================================================
 // Type-level test helpers
@@ -540,5 +541,87 @@ describe("prompt() — language key matching", () => {
   it("does not affect string mode (both strings)", () => {
     const p = prompt("str", "System" as const, "User" as const);
     expect(p.render().systemPrompt).toBe("System");
+  });
+});
+
+// ============================================================
+// 10. PromptInstance & zodSchema — TS5088 regression guard
+//     Ensures prompt() with zodSchema returns a named type that
+//     TypeScript can serialize in .d.ts without cyclic errors.
+// ============================================================
+
+describe("PromptInstance & zodSchema — TS5088 regression", () => {
+  it("prompt() with zodSchema preserves the schema at runtime", () => {
+    const schema = z.object({ content: z.string() });
+    const p = prompt("with-schema", "System" as const, "User" as const, schema);
+
+    expect(p.zodSchema).toBe(schema);
+  });
+
+  it("prompt() without zodSchema leaves zodSchema undefined", () => {
+    const p = prompt("no-schema", "System" as const, "User" as const);
+
+    expect(p.zodSchema).toBeUndefined();
+  });
+
+  it("render still works correctly when zodSchema is provided", () => {
+    const schema = z.object({ summary: z.string() });
+    const p = prompt("schema-render", "Hello {{name}}" as const, "Do: {{task}}" as const, schema);
+
+    const result = p.render({
+      systemOptions: { name: "Alice" },
+      userOptions: { task: "summarize" },
+    });
+
+    expect(result.systemPrompt).toBe("Hello Alice");
+    expect(result.userPrompt).toBe("Do: summarize");
+  });
+
+  it("zodSchema works with multi-language mode", () => {
+    const schema = z.object({ items: z.array(z.string()) });
+    const p = prompt(
+      "ml-schema",
+      { en: "System: {{role}}", pt: "Sistema: {{papel}}" } as const,
+      { en: "Go", pt: "Vai" } as const,
+      schema,
+    );
+
+    expect(p.zodSchema).toBe(schema);
+    expect(p.render("en", { systemOptions: { role: "helper" } }).systemPrompt).toBe("System: helper");
+    expect(p.render("pt", { systemOptions: { papel: "ajudante" } }).systemPrompt).toBe("Sistema: ajudante");
+  });
+
+  // Type-level: prompt() return is assignable to PromptInstance
+  it("return type is assignable to PromptInstance (named type)", () => {
+    const schema = z.object({ content: z.string() });
+    const p = prompt("typed", "Sys" as const, "Usr" as const, schema);
+
+    // This assignment proves prompt() returns PromptInstance, not an anonymous type.
+    // If prompt() returned an anonymous object literal containing z.ZodType<T>,
+    // exporting this variable in a .d.ts would trigger TS5088.
+    const _instance: PromptInstance<"Sys", "Usr", { content: string }> = p;
+    type _Check = Expect<
+      Equal<typeof p, PromptInstance<"Sys", "Usr", { content: string }>>
+    >;
+
+    expect(_instance.promptName).toBe("typed");
+  });
+
+  it("PromptInstance without schema defaults T to unknown", () => {
+    const p = prompt("no-schema", "Sys" as const, "Usr" as const);
+
+    const _instance: PromptInstance<"Sys", "Usr"> = p;
+    expect(_instance.promptName).toBe("no-schema");
+  });
+
+  it("validates data against zodSchema at runtime", () => {
+    const schema = z.object({ content: z.string(), score: z.number().min(0).max(1) });
+    const p = prompt("validate", "System" as const, "User" as const, schema);
+
+    const valid = p.zodSchema!.safeParse({ content: "hello", score: 0.9 });
+    expect(valid.success).toBe(true);
+
+    const invalid = p.zodSchema!.safeParse({ content: 123 });
+    expect(invalid.success).toBe(false);
   });
 });
