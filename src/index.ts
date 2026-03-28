@@ -1,49 +1,39 @@
 import type z from "zod";
 
-type ExtractNewTypes<S extends string> = S extends `${string}{{${infer Key}}}${infer Rest}`
-  ? [Trim<Key>, ...ExtractNewTypes<Rest>]
-  : [];
+type Whitespace = " " | "\t" | "\n";
 
-type Separator = " ";
+type TrimLeft<T extends string> = T extends `${Whitespace}${infer R}` ? TrimLeft<R> : T;
+type TrimRight<T extends string> = T extends `${infer R}${Whitespace}` ? TrimRight<R> : T;
+type Trim<T extends string> = TrimLeft<TrimRight<T>>;
 
-type Trim<T extends string, Acc extends string = ""> = T extends `${infer Char}${infer Rest}`
-  ? Char extends Separator
-    ? Trim<Rest, Acc>
-    : Trim<Rest, `${Acc}${Char}`>
-  : Acc;
+// Extract up to 5 keys per recursion level to stay within TS depth limits (~50).
+// This supports up to ~250 placeholders per template.
+type ExtractKeys<S extends string> = S extends `${string}{{${infer K1}}}${infer R1}`
+  ? R1 extends `${string}{{${infer K2}}}${infer R2}`
+    ? R2 extends `${string}{{${infer K3}}}${infer R3}`
+      ? R3 extends `${string}{{${infer K4}}}${infer R4}`
+        ? R4 extends `${string}{{${infer K5}}}${infer R5}`
+          ? Trim<K1> | Trim<K2> | Trim<K3> | Trim<K4> | Trim<K5> | ExtractKeys<R5>
+          : Trim<K1> | Trim<K2> | Trim<K3> | Trim<K4>
+        : Trim<K1> | Trim<K2> | Trim<K3>
+      : Trim<K1> | Trim<K2>
+    : Trim<K1>
+  : never;
 
-export type ArrayToObject<T extends string[]> = {
-  [K in T[number]]: string | number | boolean;
+export type KeysToObject<Keys extends string> = {
+  [K in Keys]: string | number | boolean;
 };
 
-type IsEmpty<T extends unknown[]> = T extends [] ? true : false;
-
-type OptionsField<Keys extends string[]> = IsEmpty<Keys> extends true ? Record<string, never> : ArrayToObject<Keys>;
-
-type OptionalField<Keys extends string[]> = IsEmpty<Keys> extends true ? true : false;
-
-type EvalOptions<STemplate extends string, UTemplate extends string> = {
-  [K in "systemOptions" as OptionalField<ExtractNewTypes<STemplate>> extends true ? never : K]: OptionsField<
-    ExtractNewTypes<STemplate>
-  >;
-} & {
-  [K in "userOptions" as OptionalField<ExtractNewTypes<UTemplate>> extends true ? never : K]: OptionsField<
-    ExtractNewTypes<UTemplate>
-  >;
-} & {
-  [K in "systemOptions" as OptionalField<ExtractNewTypes<STemplate>> extends true ? K : never]?: OptionsField<
-    ExtractNewTypes<STemplate>
-  >;
-} & {
-  [K in "userOptions" as OptionalField<ExtractNewTypes<UTemplate>> extends true ? K : never]?: OptionsField<
-    ExtractNewTypes<UTemplate>
-  >;
-};
+type EvalOptions<STemplate extends string, UTemplate extends string> = ([ExtractKeys<STemplate>] extends [never]
+  ? { systemOptions?: Record<string, never> }
+  : { systemOptions: KeysToObject<ExtractKeys<STemplate>> }) &
+  ([ExtractKeys<UTemplate>] extends [never]
+    ? { userOptions?: Record<string, never> }
+    : { userOptions: KeysToObject<ExtractKeys<UTemplate>> });
 
 type HasAnyPlaceholders<STemplate extends string, UTemplate extends string> = [
-  IsEmpty<ExtractNewTypes<STemplate>>,
-  IsEmpty<ExtractNewTypes<UTemplate>>,
-] extends [true, true]
+  ExtractKeys<STemplate> | ExtractKeys<UTemplate>,
+] extends [never]
   ? false
   : true;
 
@@ -63,8 +53,9 @@ type GetTemplate<T extends PromptTemplate, K extends string> = T extends string 
 type StringTemplate<T extends PromptTemplate, K extends string> =
   GetTemplate<T, K> extends string ? GetTemplate<T, K> : never;
 
-type SectionArgs<T extends string> =
-  IsEmpty<ExtractNewTypes<T>> extends true ? [vars?: Record<string, never>] : [vars: ArrayToObject<ExtractNewTypes<T>>];
+type SectionArgs<T extends string> = [ExtractKeys<T>] extends [never]
+  ? [vars?: Record<string, never>]
+  : [vars: KeysToObject<ExtractKeys<T>>];
 
 function replacePlaceholders(template: string, vars: Record<string, unknown> | undefined) {
   return template.replaceAll(/\{\{([^}]+)\}\}/g, (match, rawKey: string) => {
@@ -82,7 +73,7 @@ function replacePlaceholders(template: string, vars: Record<string, unknown> | u
  * persona.render({ role: "translator" }); // "You are a translator."
  * ```
  */
-export function promptSection<T extends string>(template: T) {
+export function promptSection<const T extends string>(template: T) {
   return {
     template,
     render(...args: SectionArgs<T>) {
@@ -107,7 +98,7 @@ export function promptSection<T extends string>(template: T) {
  * // => { systemPrompt: "Hello Alice", userPrompt: "Hi!" }
  * ```
  */
-export function prompt<S extends PromptTemplate, U extends MatchLanguages<S>, T = unknown>(
+export function prompt<const S extends PromptTemplate, const U extends MatchLanguages<S>, T = unknown>(
   promptName: string,
   systemPrompt: S,
   userPrompt: U,

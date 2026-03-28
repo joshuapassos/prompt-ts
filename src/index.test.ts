@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type ArrayToObject, prompt, promptSection } from "./index.js";
+import { type KeysToObject, prompt, promptSection } from "./index.js";
 
 // ============================================================
 // Type-level test helpers
@@ -8,7 +8,7 @@ type Expect<T extends true> = T;
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // ============================================================
-// 1. Type-level tests — ExtractNewTypes + Trim + ArrayToObject
+// 1. Type-level tests — ExtractNewTypes + Trim + KeysToObject
 //    These tests run at compile time. If a type assertion is
 //    wrong, TypeScript will emit an error on the `Expect` line.
 // ============================================================
@@ -63,9 +63,9 @@ describe("type-level tests (compile-time)", () => {
     expect(result.userPrompt).toBe("Just text");
   });
 
-  // Type-only: ArrayToObject produces correct shape
-  it("ArrayToObject maps tuple to object type", () => {
-    type Result = ArrayToObject<["name", "age"]>;
+  // Type-only: KeysToObject produces correct shape
+  it("KeysToObject maps union to object type", () => {
+    type Result = KeysToObject<"name" | "age">;
     type _Check = Expect<Equal<Result, { name: string | number | boolean; age: string | number | boolean }>>;
   });
 

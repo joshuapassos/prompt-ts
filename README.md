@@ -26,8 +26,8 @@ import { prompt } from "@joshuapassos/prompt-ts";
 
 const p = prompt(
   "greet",
-  "You are a {{role}}." as const,
-  "Say hello to {{name}}." as const
+  "You are a {{role}}.",
+  "Say hello to {{name}}."
 );
 
 const result = p.render({
@@ -43,12 +43,12 @@ const result = p.render({
 const p = prompt(
   "classify",
   {
-    en: "You are a {{category}} classifier" as const,
-    pt: "Você é um classificador de {{categoria}}" as const,
+    en: "You are a {{category}} classifier",
+    pt: "Você é um classificador de {{categoria}}",
   },
   {
-    en: "Classify: {{text}}" as const,
-    pt: "Classifique: {{texto}}" as const,
+    en: "Classify: {{text}}",
+    pt: "Classifique: {{texto}}",
   }
 );
 
@@ -68,8 +68,8 @@ p.render("pt", {
 ```ts
 import { promptSection } from "@joshuapassos/prompt-ts";
 
-const persona = promptSection("You are a {{role}}." as const);
-const tone = promptSection("Be professional and concise." as const);
+const persona = promptSection("You are a {{role}}.");
+const tone = promptSection("Be professional and concise.");
 
 const systemPrompt = [
   persona.render({ role: "translator" }),
@@ -84,7 +84,7 @@ Sections can be composed into a `prompt`:
 const p = prompt(
   "translate",
   systemPrompt,
-  "Translate: {{text}}" as const
+  "Translate: {{text}}"
 );
 
 p.render({ userOptions: { text: "Hello world" } });
@@ -102,8 +102,8 @@ const schema = z.object({
 
 const p = prompt(
   "sentiment",
-  "You are a sentiment classifier." as const,
-  "Classify: {{text}}" as const,
+  "You are a sentiment classifier.",
+  "Classify: {{text}}",
   schema
 );
 
