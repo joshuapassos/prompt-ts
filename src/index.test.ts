@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type KeysToObject, type PromptInstance, prompt, promptSection } from "./index.js";
 import { z } from "zod";
+import { type KeysToObject, type PromptInstance, prompt, promptSection } from "./index.js";
 
 // ============================================================
 // Type-level test helpers
@@ -600,9 +600,7 @@ describe("PromptInstance & zodSchema — TS5088 regression", () => {
     // If prompt() returned an anonymous object literal containing z.ZodType<T>,
     // exporting this variable in a .d.ts would trigger TS5088.
     const _instance: PromptInstance<"Sys", "Usr", { content: string }> = p;
-    type _Check = Expect<
-      Equal<typeof p, PromptInstance<"Sys", "Usr", { content: string }>>
-    >;
+    type _Check = Expect<Equal<typeof p, PromptInstance<"Sys", "Usr", { content: string }>>>;
 
     expect(_instance.promptName).toBe("typed");
   });

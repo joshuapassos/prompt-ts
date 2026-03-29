@@ -15,6 +15,10 @@
     "lint:check": "biome check .",
     "knip": "knip"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshuapassos/prompt-ts.git"
+  },
   "license": "MIT",
   "author": "Joshua Passos",
   "packageManager": "pnpm@10.11.0",
