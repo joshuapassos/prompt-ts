@@ -1,6 +1,7 @@
 # @joshuapassos/prompt-ts
 
 [![GitHub](https://img.shields.io/github/stars/joshuapassos/prompt-ts?style=flat)](https://github.com/joshuapassos/prompt-ts)
+[![npm](https://img.shields.io/npm/v/@joshuapassos/prompt-ts?style=flat)](https://www.npmjs.com/package/@joshuapassos/prompt-ts)
 
 Type-safe prompt templating engine for TypeScript. Build structured LLM prompts with compile-time placeholder validation, multi-language support, and optional Zod schema integration.
 
